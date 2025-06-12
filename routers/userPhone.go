@@ -20,22 +20,6 @@ type UserPhoneQuery struct {
 
 func UserPhoneRouters(r *gin.RouterGroup, svc *services.UserPhoneService, logger *zap.Logger) {
 	router := r.Group("user-phones")
-	// 	validated, _ := ctx.Get("validated")
-	// 	data := validated.(*UserLoginRequest)
-	// 	token, err := svc.Login(ctx, data.PhoneNumber, data.Password)
-	// 	if err != nil {
-	// 		// ctx.JSON(http.StatusUnauthorized, gin.H{
-	// 		// 	"error":   "Unauthorized",
-	// 		// 	"details": err.Error(),
-	// 		// })
-	// 		ctx.Set("app_error", err)
-	// 		ctx.AbortWithStatus(http.StatusUnauthorized)
-	// 		return
-	// 	}
-	// 	ctx.JSON(http.StatusOK, gin.H{
-	// 		"token": token,
-	// 	})
-	// })
 
 	router.POST("", middlewares.Validator(&models.UserPhone{}), func(ctx *gin.Context) {
 		validated, _ := ctx.Get("validated")
@@ -62,7 +46,6 @@ func UserPhoneRouters(r *gin.RouterGroup, svc *services.UserPhoneService, logger
 		params := validated.(*UserPhoneQuery)
 		items, total, err := svc.ListUserPhones(ctx.Request.Context(), params.PhoneNumber, params.SerialNumber, params.Page, params.Limit)
 		if err != nil {
-			// ctx.JSON(http.StatusNotFound, gin.H{"error:": "Failed to query user phones", "details": err.Error()})
 			ctx.Set("app_error", err)
 			ctx.AbortWithStatus(http.StatusNotFound)
 			return
