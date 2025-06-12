@@ -1,0 +1,18 @@
+version: "3.8"
+services:
+  mongo:
+    image: mongo:6.0.6
+    network_mode: bridge
+    container_name: mongodb_scalper_go
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=scalper
+      - MONGO_INITDB_ROOT_USERNAME=user
+      - MONGO_INITDB_ROOT_PASSWORD=pass
+      - MONGO_REPLICA_SET_NAME=rs5
+    command: mongod --replSet rs5 --keyFile /etc/mongo-replication.key
+    volumes:
+      - ./data:/data/mongo
+      - ./mongo-replication.key:/etc/mongo-replication.key
+      - ./mongo_compose_init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro

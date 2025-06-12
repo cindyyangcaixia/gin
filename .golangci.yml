@@ -1,0 +1,43 @@
+# linters-settings:
+#   lll: # 行长度检查器
+#     line-length: 80 # 最大允许长度
+#     tab-width: 2 # 制表符宽度（Go默认为1个tab=8空格，但通常用空格替代）
+# linters:
+#   enable:
+#     - lll # 启用行长度检查
+run:
+  timeout: 5m
+  skip-dirs:
+    - vendor
+
+linters-settings:
+  lll:
+    line-length: 120
+  govet:
+    check-shadowing: true
+  misspell:
+    locale: US
+  gocyclo:
+    min-complexity: 10
+  # goimports:
+  #   local-prefixes: myapp
+  gofumpt:
+    extra-rules: true
+
+linters:
+  enable:
+    - gofumpt
+    - goimports
+    - govet
+    - misspell
+    - gocyclo
+    - lll
+    - staticcheck
+    - unused
+    - errcheck
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - lll

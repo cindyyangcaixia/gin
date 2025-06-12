@@ -1,0 +1,11 @@
+{
+  "go.formatTool": "gofumpt",
+  "go.lintTool": "golangci-lint",
+  "go.lintFlags": ["--config=.golangci.yml"],
+  "[go]": {
+    "editor.formatOnSave": true,
+  },
+  "editor.rulers": [120],
+  "editor.wordWrap": "bounded",
+  "editor.wordWrapColumn": 120
+}
