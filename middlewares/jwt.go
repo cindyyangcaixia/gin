@@ -1,11 +1,12 @@
 package middlewares
 
 import (
-	stderrors "errors"
 	"net/http"
 	"scalper/errors"
 	"scalper/services"
 	"strings"
+
+	stderrors "github.com/pkg/errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -18,16 +19,16 @@ func JWTAuth(secret string, logger *zap.Logger) gin.HandlerFunc {
 		tokenString := c.GetHeader("Authorization")
 		if tokenString == "" {
 			logger.Error("Missing Authorization header")
-			c.Set("app_error", errors.NewAppError(errors.ErrCodeInvalidToken, stderrors.New("Missing Authorization header"), ""))
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.Set("app_error", errors.NewAppError(errors.ErrCodeInvalidToken, http.StatusUnauthorized, stderrors.New("Missing Authorization header"), ""))
+			c.Abort()
 			return
 		}
 
 		parts := strings.Split(tokenString, " ")
 		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
 			logger.Error("Invalid Authorization header")
-			c.Set("app_error", errors.NewAppError(errors.ErrCodeInvalidToken, stderrors.New("Invalid Authorization header"), ""))
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.Set("app_error", errors.NewAppError(errors.ErrCodeInvalidToken, http.StatusUnauthorized, stderrors.New("Invalid Authorization header"), ""))
+			c.Abort()
 			return
 		}
 
@@ -43,8 +44,8 @@ func JWTAuth(secret string, logger *zap.Logger) gin.HandlerFunc {
 
 		if err != nil || !token.Valid {
 			logger.Error("Invalid token", zap.Error(err))
-			c.Set("app_error", errors.NewAppError(errors.ErrCodeInvalidToken, stderrors.New("Invalid token"), ""))
-			c.AbortWithStatus(http.StatusUnauthorized)
+			c.Set("app_error", errors.NewAppError(errors.ErrCodeInvalidToken, http.StatusUnauthorized, stderrors.New("Invalid token"), ""))
+			c.Abort()
 
 			return
 		}

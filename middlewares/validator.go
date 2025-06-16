@@ -1,13 +1,15 @@
 package middlewares
 
 import (
-	stderrors "errors"
 	"net/http"
 	"scalper/errors"
+
+	stderrors "github.com/pkg/errors"
 
 	"regexp"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -15,29 +17,35 @@ func Validator(param interface{}) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// body, _ := c.GetRawData() body只能被获取一次
 		// fmt.Println("Raw body:", string(body))
-		var bindErr error
-		switch c.Request.Method {
-		case "POST", "PUT", "PATCH":
-			bindErr = c.ShouldBindJSON(param)
-		case "GET":
-			bindErr = c.ShouldBind(param)
-		default:
-			c.Set("app_error", errors.NewAppError(errors.ErrCodeMethodNotAllowed, stderrors.New("Unsupported method"), ""))
-			c.AbortWithStatus(http.StatusBadRequest)
+		methods := map[string]bool{
+			"POST":  true,
+			"PUT":   true,
+			"PATCH": true,
+		}
+		// Modify it when file upload is needed.
+		if methods[c.Request.Method] && c.ContentType() != binding.MIMEJSON {
+			c.Set("app_error", errors.NewAppError(errors.ErrCodeInvalidParam, http.StatusBadRequest, stderrors.New("only support json "), "only support json"))
+			c.Abort()
 			return
 		}
 
-		if bindErr != nil {
-			c.Set("app_error", errors.NewAppError(errors.ErrCodeInvalidParam, bindErr, ""))
-			c.AbortWithStatus(http.StatusBadRequest)
+		if err := c.ShouldBindUri(param); err != nil {
+			c.Set("app_error", errors.NewAppError(errors.ErrCodeInvalidParam, http.StatusBadRequest, stderrors.New(err.Error()), ""))
+			c.Abort()
+			return
+		}
+
+		if err := c.ShouldBind(param); err != nil {
+			c.Set("app_error", errors.NewAppError(errors.ErrCodeInvalidParam, http.StatusBadRequest, stderrors.New(err.Error()), ""))
+			c.Abort()
 			return
 		}
 
 		validator := validator.New()
 		validator.RegisterValidation("phone", validatePhone)
 		if err := validator.Struct(param); err != nil {
-			c.Set("app_error", errors.NewAppError(errors.ErrCodeValidation, err, err.Error()))
-			c.AbortWithStatus(http.StatusBadRequest)
+			c.Set("app_error", errors.NewAppError(errors.ErrCodeValidation, http.StatusBadRequest, stderrors.New(err.Error()), err.Error()))
+			c.Abort()
 			return
 		}
 

@@ -28,6 +28,13 @@ func writeJsonResponse(ctx *gin.Context, logger *zap.Logger, status int, code in
 		"data":    data,
 	}
 
+	// logger.Info(
+	// 	"Preparing to write JSON response",
+	// 	zap.Int("status", status),
+	// 	zap.Any("formatted", formatted),
+	// 	zap.Any("headers", writer.Header()),
+	// 	zap.Bool("written", writer.Written()),
+	// )
 	writer.Header().Set("Content-Type", "application/json")
 	writer.WriteHeader(status)
 	if err := json.NewEncoder(writer).Encode(formatted); err != nil {
@@ -40,6 +47,15 @@ func writeJsonResponse(ctx *gin.Context, logger *zap.Logger, status int, code in
 	// }
 
 	logger.Info("response formatted", zap.Int("status", status), zap.Int("code", code), zap.String("message", message))
+
+	logger.Info(
+		"Response",
+		zap.String("level", "info"),
+		zap.Int("status", status),
+		zap.Int("code", code),
+		zap.String("message", message),
+		zap.Any("headers", writer.Header()),
+	)
 }
 
 func ResponseFormatter(logger *zap.Logger) gin.HandlerFunc {
@@ -52,12 +68,13 @@ func ResponseFormatter(logger *zap.Logger) gin.HandlerFunc {
 
 		if appErr, exists := ctx.Get("app_error"); exists {
 			if err, ok := appErr.(*errors.AppError); ok {
-				ctx.Error(err)
+				ctx.Error(err.Err)
 				writeJsonResponse(ctx, logger, ctx.Writer.Status(), err.Code, err.Message, nil, writer.ResponseWriter)
 				return
 			}
 
-			writeJsonResponse(ctx, logger, http.StatusInternalServerError, errors.ErrCodeInternalServer, errors.ErrorMessages[errors.ErrCodeInternalServer], nil, writer.ResponseWriter)
+			writeJsonResponse(ctx, logger, http.StatusInternalServerError, errors.ErrCodeInternalServer,
+				errors.ErrorMessages[errors.ErrCodeInternalServer], nil, writer.ResponseWriter)
 			return
 		}
 
@@ -68,7 +85,8 @@ func ResponseFormatter(logger *zap.Logger) gin.HandlerFunc {
 
 		var data interface{}
 		if err := json.Unmarshal(writer.body.Bytes(), &data); err != nil {
-			writeJsonResponse(ctx, logger, http.StatusInternalServerError, errors.ErrCodeInternalServer, errors.ErrorMessages[errors.ErrCodeInternalServer], nil, writer.ResponseWriter)
+			writeJsonResponse(ctx, logger, http.StatusInternalServerError, errors.ErrCodeInternalServer,
+				errors.ErrorMessages[errors.ErrCodeInternalServer], nil, writer.ResponseWriter)
 			return
 		}
 

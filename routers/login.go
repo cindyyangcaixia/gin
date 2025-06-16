@@ -24,7 +24,7 @@ func UserPhoneLoginRouters(r *gin.RouterGroup, svc *services.UserPhoneService, l
 		token, err := svc.Login(ctx, data.PhoneNumber, data.Password)
 		if err != nil {
 			ctx.Set("app_error", err)
-			ctx.AbortWithStatus(http.StatusUnauthorized)
+			ctx.Abort()
 			return
 		}
 

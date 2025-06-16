@@ -6,6 +6,7 @@ import (
 
 	"scalper/models"
 
+	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -32,22 +33,28 @@ func (r *UserPhoneRepository) EnsureIndexes(ctx context.Context) error {
 	return err
 }
 
-func (r *UserPhoneRepository) InsertOne(ctx context.Context, userPhone *models.UserPhone) (*mongo.InsertOneResult, error) {
+func (r *UserPhoneRepository) InsertOne(ctx context.Context, userPhone *models.UserPhone) (*mongo.InsertOneResult,
+	error) {
 	userPhone.CreateTime = time.Now()
 	userPhone.UpdateTime = time.Now()
-	return r.coll.InsertOne(ctx, userPhone)
+	data, err := r.coll.InsertOne(ctx, userPhone)
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+	return data, nil
 }
 
 func (r *UserPhoneRepository) FindOne(ctx context.Context, phoneNumber string) (*models.UserPhone, error) {
 	var result models.UserPhone
 	err := r.coll.FindOne(ctx, bson.M{"phone_number": phoneNumber}).Decode((&result))
 	if err != nil {
-		return nil, err
+		return nil, errors.New(err.Error())
 	}
 	return &result, nil
 }
 
-func (r *UserPhoneRepository) ListUserPhones(ctx context.Context, phoneNumber string, serialNumber *string, page, limit int64) ([]*models.UserPhone, int64, error) {
+func (r *UserPhoneRepository) ListUserPhones(ctx context.Context, phoneNumber string, serialNumber *string, page,
+	limit int64) ([]*models.UserPhone, int64, error) {
 	filter := bson.M{}
 	if phoneNumber != "" {
 		filter["phone_number"] = phoneNumber
@@ -61,18 +68,18 @@ func (r *UserPhoneRepository) ListUserPhones(ctx context.Context, phoneNumber st
 
 	cursor, err := r.coll.Find(ctx, filter, findOptions)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, errors.New(err.Error())
 	}
 	defer cursor.Close(ctx)
 
 	var results []*models.UserPhone
 	if err := cursor.All(ctx, &results); err != nil {
-		return nil, 0, err
+		return nil, 0, errors.New(err.Error())
 	}
 
 	total, err := r.coll.CountDocuments(ctx, filter)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, errors.New(err.Error())
 	}
 
 	return results, total, nil

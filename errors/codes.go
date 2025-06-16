@@ -1,9 +1,12 @@
 package errors
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type AppError struct {
 	Code    int
+	Status  int
 	Message string
 	Err     error
 }
@@ -19,13 +22,14 @@ func (e *AppError) Unwrap() error {
 	return e.Err
 }
 
-func NewAppError(code int, err error, msg string) *AppError {
+func NewAppError(code int, status int, err error, msg string) *AppError {
 	message, ok := ErrorMessages[code]
 	if !ok {
 		message = "Unknown error"
 	}
 	return &AppError{
 		Code:    code,
+		Status:  status,
 		Message: message + msg,
 		Err:     err,
 	}

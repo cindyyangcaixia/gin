@@ -2,11 +2,13 @@ package services
 
 import (
 	"context"
-	stderrors "errors"
+	"net/http"
 	"scalper/errors"
 	"scalper/models"
 	"scalper/repositories"
 	"time"
+
+	stderrors "github.com/pkg/errors"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/spf13/viper"
@@ -39,12 +41,20 @@ func (s *UserPhoneService) CreateUserPhone(ctx context.Context,
 	// if err != nil {
 	// 	hashedPassword := string(hashedBytes)
 	// }
-	return s.repo.InsertOne(ctx, userPhone)
+	res, err := s.repo.InsertOne(ctx, userPhone)
+	if err != nil {
+		return nil, errors.NewAppError(errors.ErrCodeUserNotExist, http.StatusBadRequest, err, "")
+	}
+	return res, nil
 }
 
 func (s *UserPhoneService) GetUserPhone(ctx context.Context,
 	phoneNumber string) (*models.UserPhone, error) {
-	return s.repo.FindOne(ctx, phoneNumber)
+	userPhone, err := s.repo.FindOne(ctx, phoneNumber)
+	if err != nil {
+		return nil, errors.NewAppError(errors.ErrCodeUserNotExist, http.StatusNotFound, err, "")
+	}
+	return userPhone, nil
 }
 
 func (s *UserPhoneService) ListUserPhones(ctx context.Context, phoneNumber string,
@@ -55,14 +65,18 @@ func (s *UserPhoneService) ListUserPhones(ctx context.Context, phoneNumber strin
 	if limit < 1 {
 		limit = 10
 	}
-	return s.repo.ListUserPhones(ctx, phoneNumber, serialNumber, page, limit)
+	items, total, err := s.repo.ListUserPhones(ctx, phoneNumber, serialNumber, page, limit)
+	if err != nil {
+		return nil, 0, errors.NewAppError(errors.ErrCodeUserNotExist, http.StatusBadRequest, err, "")
+	}
+	return items, total, nil
 }
 
 func (s *UserPhoneService) Login(ctx context.Context, phoneNumber string, password string) (string, error) {
 	userPhone, err := s.repo.FindOne(ctx, phoneNumber)
 	s.logger.Info("users: %v", zap.Error(err))
 	if err != nil {
-		return "", errors.NewAppError(errors.ErrCodeUserNotExist, stderrors.New("invalid users"), "")
+		return "", errors.NewAppError(errors.ErrCodeUserNotExist, http.StatusNotFound, stderrors.New("invalid users"), "")
 	}
 
 	// if err := bcrypt.CompareHashAndPassword([]byte(userPhone.PasswordHash), []byte(password)); err != nil {
@@ -84,7 +98,8 @@ func (s *UserPhoneService) Login(ctx context.Context, phoneNumber string, passwo
 	tokenString, err := token.SignedString([]byte(viper.GetString("JwtSecret")))
 	if err != nil {
 		s.logger.Error("Failed to generate token", zap.Error(err))
-		return "", errors.NewAppError(errors.ErrCodeInvalidToken, stderrors.New("failed to generate token"), "")
+		return "", errors.NewAppError(errors.ErrCodeInvalidToken, http.StatusInternalServerError,
+			stderrors.New("failed to generate token"), "")
 	}
 	return tokenString, nil
 }

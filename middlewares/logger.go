@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"time"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -10,24 +10,33 @@ import (
 
 func Logger(logger *zap.Logger) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		start := time.Now()
-		path := ctx.Request.URL.Path
-		method := ctx.Request.Method
-		clientIp := ctx.ClientIP()
+		// start := time.Now()
+		// path := ctx.Request.URL.Path
+		// method := ctx.Request.Method
+		// clientIp := ctx.ClientIP()
 
 		ctx.Next()
 
-		latency := time.Since(start)
-		status := ctx.Writer.Status()
+		// latency := time.Since(start)
+		// status := ctx.Writer.Status()
 
-		logger.Info("Http request",
-			zap.String("method", method),
-			zap.String("path", path),
-			zap.Int("status", status),
-			zap.Duration("latency", latency),
-			zap.String("client_ip", clientIp),
-			zap.Any("errors", ctx.Errors.ByType(gin.ErrorTypeAny)),
-		)
+		// logger.Info("Http request",
+		// 	zap.String("method", method),
+		// 	zap.String("path", path),
+		// 	zap.Int("status", status),
+		// 	zap.Duration("latency", latency),
+		// 	zap.String("client_ip", clientIp),
+		// 	zap.Any("errors", ctx.Errors.ByType(gin.ErrorTypeAny)),
+		// )
+
+		if len(ctx.Errors) > 0 {
+			for _, err := range ctx.Errors {
+				errWithStack := fmt.Sprintf("%+v", err.Err)
+				logger.Error("API 请求错误",
+					zap.String("error", errWithStack),
+				)
+			}
+		}
 	}
 }
 

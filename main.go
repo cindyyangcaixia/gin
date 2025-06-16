@@ -55,7 +55,7 @@ func main() {
 		},
 	}))
 
-	// r.Use(middlewares.Logger(logger))
+	r.Use(middlewares.Logger(logger))
 	r.Use(middlewares.ResponseFormatter(logger))
 	r.Use(ginzap.RecoveryWithZap(logger, true))
 
