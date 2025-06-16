@@ -46,7 +46,7 @@ func writeJsonResponse(ctx *gin.Context, logger *zap.Logger, status int, code in
 	// 	flusher.Flush()
 	// }
 
-	logger.Info("response formatted", zap.Int("status", status), zap.Int("code", code), zap.String("message", message))
+	// logger.Info("response formatted", zap.Int("status", status), zap.Int("code", code), zap.String("message", message))
 
 	logger.Info(
 		"Response",
@@ -68,7 +68,7 @@ func ResponseFormatter(logger *zap.Logger) gin.HandlerFunc {
 
 		if appErr, exists := ctx.Get("app_error"); exists {
 			if err, ok := appErr.(*errors.AppError); ok {
-				ctx.Error(err.Err)
+				// ctx.Error(err.Err)
 				writeJsonResponse(ctx, logger, ctx.Writer.Status(), err.Code, err.Message, nil, writer.ResponseWriter)
 				return
 			}

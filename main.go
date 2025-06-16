@@ -64,7 +64,7 @@ func main() {
 	}, logger, viper.GetString("JwtSecret"))
 
 	// Run server
-	if err := r.Run(":3000"); err != nil {
+	if err := r.Run(viper.GetString("PORT")); err != nil {
 		logger.Fatal("Failed to start serve %v", zap.Error(err))
 	}
 }
